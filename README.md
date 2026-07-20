@@ -20,9 +20,9 @@
    ./start.sh
    ```
 
-   Или выполните `python3 -m http.server 8000` в папке проекта. В Windows — `start.bat` или `python -m http.server 8000`.
+   Или выполните `python3 -m http.server 4000 --bind 127.0.0.1` в папке проекта. В Windows — `start.bat` или `python -m http.server 4000 --bind 127.0.0.1`.
 
-3. Откройте [http://localhost:8000](http://localhost:8000). Не открывайте `index.html` двойным кликом: Pyodide должен загружать WebAssembly через HTTP.
+3. Откройте [http://localhost:4000](http://localhost:4000). Не открывайте `index.html` двойным кликом: Pyodide должен загружать WebAssembly через HTTP.
 
 После шага 1 отключите интернет: уроки и выполнение Python продолжат работать. Для проверки выполните `npm test`; Node.js нужен только для тестов, а не для работы сайта.
 
@@ -57,3 +57,13 @@ start.sh / start.bat    локальный веб-сервер
 ```
 
 Урок про HTTP намеренно использует локальный пример JSON: сам тренажёр не делает запросов в интернет и сохраняет офлайн-режим.
+
+## Постоянный запуск на macOS
+
+Для работы в течение всей пользовательской сессии и автозапуска после входа в macOS используется файл `com.python-ai-agents-course.plist`. Установка выполняется одной командой:
+
+```sh
+./install-service-macos.sh
+```
+
+После этого курс доступен по [http://localhost:4000](http://localhost:4000), пока пользователь вошёл в macOS. Для остановки и удаления службы выполните `./uninstall-service-macos.sh`.
