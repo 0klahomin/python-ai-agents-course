@@ -33,6 +33,10 @@
     state.lastStudyDate = today; saveState();
   }
   function escaped(value) { return String(value).replace(/[&<>"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[char]); }
+  function starterForTask(task) {
+    const hint = task.required?.length ? `# Подсказка: используй ${task.required.join(', ')}` : '# Начни с переменных и print()';
+    return `# Напиши решение здесь\n${hint}\n`;
+  }
   function currentLesson() { return COURSE.find((lesson) => lesson.id === state.current) || COURSE[0]; }
   function isComplete(lesson) { return state.completed.includes(lesson.id); }
   function checkCompletion(lesson) {
@@ -96,7 +100,8 @@
     const quiz = lesson.quiz.map((item, index) => `<div class="quiz-question"><span class="question-number">${index + 1}</span><p>${escaped(item.question)}</p>${item.options.map((option, optionIndex) => `<label class="option"><input type="radio" name="q${index}" value="${optionIndex}"> ${escaped(option)}</label>`).join('')}</div>`).join('');
     const tasks = lesson.practice.map((task, index) => {
       const key = `${lesson.id}:${index}`; const record = state.practice[key] || {}; const attempts = state.attempts[key] || 0;
-      return `<div class="task"><p><strong>Задание ${index + 1}.</strong> ${escaped(task.instruction)}</p><div class="task-workspace"><div class="editor-panel"><textarea class="editor" id="editor-${index}" spellcheck="false" aria-label="Код для задания ${index + 1}">${escaped(record.code || task.starter)}</textarea><div class="run-row"><button class="primary-button run-code" type="button" data-task="${index}"><i class="fa-solid fa-play" aria-hidden="true"></i> Запустить</button><span class="attempts">Попыток: <span id="attempts-${index}">${attempts}</span></span></div></div><div class="output-wrap"><span class="output-label">Вывод Python</span><pre class="output" id="output-${index}">${escaped(record.output || 'Нажми «Запустить», чтобы выполнить код.')}</pre></div></div><p class="feedback ${record.passed ? 'success' : ''}" id="practice-feedback-${index}">${record.passed ? '✓ Задание выполнено.' : ''}</p></div>`;
+      const draft = record.code && record.code !== task.starter ? record.code : starterForTask(task);
+      return `<div class="task"><p><strong>Задание ${index + 1}.</strong> ${escaped(task.instruction)}</p><div class="task-workspace"><div class="editor-panel"><textarea class="editor" id="editor-${index}" spellcheck="false" aria-label="Код для задания ${index + 1}">${escaped(draft)}</textarea><div class="run-row"><button class="primary-button run-code" type="button" data-task="${index}"><i class="fa-solid fa-play" aria-hidden="true"></i> Запустить</button><span class="attempts">Попыток: <span id="attempts-${index}">${attempts}</span></span></div></div><div class="output-wrap"><span class="output-label">Вывод Python</span><pre class="output" id="output-${index}">${escaped(record.output || 'Нажми «Запустить», чтобы выполнить код.')}</pre></div></div><p class="feedback ${record.passed ? 'success' : ''}" id="practice-feedback-${index}">${record.passed ? '✓ Задание выполнено.' : ''}</p></div>`;
     }).join('');
     const completion = isComplete(lesson) ? `<section class="card completion"><span class="completion-icon">✓</span><div><h2>Урок пройден</h2><p>Следующий урок уже доступен в маршруте.</p></div></section>` : '';
     $('#lesson-view').innerHTML = `<header class="lesson-header"><div><p class="lesson-kicker">${escaped(lesson.badge)} · урок ${lesson.id}</p><h1 class="lesson-title">${escaped(lesson.title)}</h1></div><span class="lesson-count">${lesson.practice.length} практики</span></header><section class="card theory-card"><h2>1. Теория</h2><div class="theory-grid"><p class="theory-text">${escaped(lesson.theory)}</p><pre class="code-example"><code>${escaped(lesson.example)}</code></pre></div></section><section class="card quiz-card"><div class="section-heading"><div><h2>2. Проверь себя</h2><p class="theory-text">Три вопроса · проходной балл 70%</p></div></div><form id="quiz-form"><div class="quiz-list">${quiz}</div><button class="primary-button" type="submit"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Проверить тест</button><p class="feedback ${previousQuiz?.passed ? 'success' : ''}" id="quiz-feedback">${previousQuiz ? `Последний результат: ${previousQuiz.percent}%. ${previousQuiz.passed ? '✓ Тест зачтён.' : 'Попробуй ещё раз.'}` : ''}</p></form></section><section class="card practice-card"><div class="section-heading"><div><h2>3. Практика в Python</h2><p class="theory-text">Код запускается в браузере через Pyodide.</p></div><span class="practice-count">${lesson.practice.length} задания</span></div>${tasks}</section>${completion}`;
@@ -136,9 +141,14 @@
     } finally { button.disabled = false; button.innerHTML = '<i class="fa-solid fa-play" aria-hidden="true"></i> Запустить'; }
   }
   function setRuntime(text, kind = '') { const status = $('#runtime-status'); status.textContent = text; status.className = `runtime-status ${kind}`; }
+  function warmPython() {
+    const schedule = window.requestIdleCallback || ((callback) => window.setTimeout(callback, 450));
+    schedule(() => ensurePyodide().catch(() => {}));
+  }
   function render() { applyTheme(); renderSprint(); renderRoadmap(); renderStreak(); renderLesson(); }
   $('#theme-toggle').addEventListener('click', () => { state.theme = state.theme === 'dark' ? 'light' : 'dark'; saveState(); applyTheme(); });
   $('#reset-progress').addEventListener('click', () => { if (window.confirm('Сбросить весь прогресс этого курса на этом устройстве?')) { state = defaultState(); saveState(); render(); } });
-  if (window.loadPyodide) setRuntime('Python: готов к запуску'); else setRuntime('Python: CDN недоступен', 'error');
+  if (window.loadPyodide) setRuntime('Python: подготавливается…'); else setRuntime('Python: CDN недоступен', 'error');
   render();
+  if (window.loadPyodide) warmPython();
 })();
