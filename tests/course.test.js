@@ -9,15 +9,18 @@ const {
   validatePractice,
 } = require('../assets/course-data.js');
 
-test('course contains a complete, ordered 30-lesson path', () => {
-  assert.equal(COURSE.length, 30);
-  assert.deepEqual(COURSE.map((lesson) => lesson.id), Array.from({ length: 30 }, (_, index) => index + 1));
-  assert.equal(COURSE.filter((lesson) => lesson.block === 1).length, 14);
-  assert.equal(COURSE.filter((lesson) => lesson.block === 2).length, 16);
+test('course remains ordered and grows when new topics are added', () => {
+  assert.ok(COURSE.length >= 42);
+  assert.deepEqual(COURSE.map((lesson) => lesson.id), Array.from({ length: COURSE.length }, (_, index) => index + 1));
+  assert.ok(COURSE.filter((lesson) => lesson.block === 1).length >= 17);
+  assert.ok(COURSE.filter((lesson) => lesson.block === 2).length >= 25);
   for (const lesson of COURSE) {
     assert.ok(lesson.title);
     assert.equal(lesson.quiz.length, 3);
     assert.ok(lesson.practice.length >= 1);
+  }
+  for (const lesson of COURSE.filter((lesson) => lesson.block === 1).slice(0, 14)) {
+    assert.ok(lesson.practice.length >= 3, `${lesson.title} needs beginner drills`);
   }
 });
 
@@ -30,12 +33,14 @@ test('quiz evaluation requires at least 70 percent', () => {
   assert.deepEqual(evaluateAnswers(questions, [0, 1, 1, 1, 1]), { correct: 3, percent: 60, passed: false });
 });
 
-test('only the first and sequentially next lessons unlock', () => {
+test('three-day sprint unlocks only its next practical step', () => {
   assert.equal(isLessonUnlocked(1, []), true);
   assert.equal(isLessonUnlocked(2, []), false);
   assert.equal(isLessonUnlocked(2, [1]), true);
-  assert.equal(isLessonUnlocked(4, [1, 2]), false);
-  assert.equal(isLessonUnlocked(4, [1, 2, 3]), true);
+  assert.equal(isLessonUnlocked(6, [1, 2]), false);
+  assert.equal(isLessonUnlocked(6, [1, 2, 3]), true);
+  assert.equal(isLessonUnlocked(12, [1, 2, 3, 6, 8]), true);
+  assert.equal(isLessonUnlocked(4, [1, 2, 3]), false);
 });
 
 test('practice validator reports matching output and required code snippets', () => {

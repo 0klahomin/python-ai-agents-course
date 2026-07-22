@@ -1,69 +1,82 @@
-# Python → AI-агенты — офлайн-курс
+# Python → AI-агенты
 
-Статический тренажёр из 30 последовательных уроков: 14 уроков Python и 16 уроков по AI-агентам. В каждом уроке есть короткая теория, тест с проходным баллом 70% и упражнение с реальным запуском Python в браузере.
+Онлайн-тренажёр для двух самостоятельных учеников: расширяемая программа Python и AI-агентов, светлая и тёмная темы, тесты с проходным баллом 70% и реальный Python прямо в браузере через Pyodide.
 
-В интерфейсе нет CDN, внешних шрифтов, API-запросов или runtime-зависимостей. Всё работает локально после однократной установки Pyodide.
+Актуальные первоисточники и добавленные темы зафиксированы в [sources.md](sources.md).
 
-## Запуск
+Первый блок — Python для новичка: 14 тем с короткой теорией, тестом и минимум тремя небольшими упражнениями на тему. Второй блок знакомит с LLM API, циклом агента, ReAct, Reflection, function calling, памятью, инструментами, MCP и упаковкой проекта.
 
-1. Один раз при наличии интернета скачайте Pyodide (полная локальная поставка, около 370 MB):
+## Локальный запуск
 
-   ```sh
-   ./setup.sh
-   ```
-
-   В Windows запустите `setup.bat`. Скрипт кладёт среду в `vendor/pyodide/`.
-
-2. Запустите локальный сервер:
-
-   ```sh
-   ./start.sh
-   ```
-
-   Или выполните `python3 -m http.server 4000 --bind 127.0.0.1` в папке проекта. В Windows — `start.bat` или `python -m http.server 4000 --bind 127.0.0.1`.
-
-3. Откройте [http://localhost:4000](http://localhost:4000). Не открывайте `index.html` двойным кликом: Pyodide должен загружать WebAssembly через HTTP.
-
-После шага 1 отключите интернет: уроки и выполнение Python продолжат работать. Для проверки выполните `npm test`; Node.js нужен только для тестов, а не для работы сайта.
-
-## Прогресс
-
-Прогресс, результаты тестов, попытки и открытый урок сохраняются в `localStorage` браузера под ключом `python-ai-agents-offline-course-v1`. Он переживает перезапуск браузера и компьютера в том же профиле.
-
-Чтобы перенести прогресс на другой компьютер, на исходном устройстве откройте DevTools → Console на странице курса и выполните:
-
-```js
-copy(localStorage.getItem('python-ai-agents-offline-course-v1'))
-```
-
-Сохраните скопированный текст в безопасном месте. На новом компьютере откройте курс, DevTools → Console и выполните (вставьте свой сохранённый JSON вместо `PASTE_JSON`):
-
-```js
-localStorage.setItem('python-ai-agents-offline-course-v1', 'PASTE_JSON'); location.reload()
-```
-
-Для сброса прогресса используйте кнопку «Сбросить прогресс» внизу маршрута.
-
-## Структура
-
-```text
-index.html              интерфейс
-styles.css              светлая/тёмная тема
-app.js                  прогресс, тесты, Pyodide-тренажёр
-assets/course-data.js   все 30 уроков и проверки
-vendor/pyodide/         локальный Python после setup
-setup.sh / setup.bat    одноразовая загрузка Pyodide
-start.sh / start.bat    локальный веб-сервер
-```
-
-Урок про HTTP намеренно использует локальный пример JSON: сам тренажёр не делает запросов в интернет и сохраняет офлайн-режим.
-
-## Постоянный запуск на macOS
-
-Для работы в течение всей пользовательской сессии и автозапуска после входа в macOS используется файл `com.python-ai-agents-course.plist`. Установка выполняется одной командой:
+Сайт статический — достаточно любого HTTP-сервера:
 
 ```sh
-./install-service-macos.sh
+python3 -m http.server 4000 --bind 127.0.0.1
 ```
 
-После этого курс доступен по [http://localhost:4000](http://localhost:4000), пока пользователь вошёл в macOS. Для остановки и удаления службы выполните `./uninstall-service-macos.sh`.
+Откройте `http://127.0.0.1:4000`. Для запуска кода нужен интернет: Pyodide загружается с `cdn.jsdelivr.net` при первом использовании тренажёра.
+
+## Деплой на GitHub Pages
+
+1. Создайте репозиторий на GitHub и отправьте в него содержимое этой папки.
+2. В репозитории откройте **Settings → Pages**.
+3. В разделе **Build and deployment** выберите **Deploy from a branch**, ветку `main` и папку `/(root)`.
+4. Сохраните настройки. Через несколько минут сайт будет доступен по ссылке из этого раздела.
+
+Никакой сборки не требуется: GitHub Pages отдаёт `index.html`, `styles.css`, `app.js` и `assets/course-data.js` как обычные статические файлы.
+
+## Деплой на Vercel
+
+### Через интерфейс
+
+Импортируйте GitHub-репозиторий в [Vercel](https://vercel.com/new). Framework Preset оставьте `Other`, Build Command и Output Directory оставьте пустыми, затем нажмите **Deploy**.
+
+### Через CLI
+
+```sh
+npx vercel --prod
+```
+
+Выберите текущую папку и оставьте настройки по умолчанию. Сборка не нужна.
+
+## Прогресс и два пользователя
+
+Прогресс хранится только в `localStorage` браузера под ключом `python-ai-agents-online-course-v2`. Поэтому у вас и друга будут независимые результаты на своих устройствах и в своих профилях браузера. Регистрация и сервер не нужны.
+
+Чтобы перенести прогресс на другое устройство:
+
+1. На исходном устройстве откройте DevTools → Console и выполните:
+
+   ```js
+   copy(localStorage.getItem('python-ai-agents-online-course-v2'))
+   ```
+
+2. На новом устройстве откройте курс, затем в Console вставьте сохранённый JSON:
+
+   ```js
+   localStorage.setItem('python-ai-agents-online-course-v2', 'PASTE_JSON'); location.reload()
+   ```
+
+Не публикуйте этот текст: он содержит историю вашего прогресса. Кнопка «Сбросить прогресс» очищает данные только в текущем браузере.
+
+## Проверка
+
+```sh
+npm test
+node --check app.js
+node --check assets/course-data.js
+```
+
+## Источники контента
+
+Материал адаптирован для коротких уроков с опорой на официальные и профильные источники:
+
+- [Python Tutorial](https://docs.python.org/3/tutorial/)
+- [A practical guide to building agents — OpenAI](https://openai.com/business/guides-and-resources/a-practical-guide-to-building-ai-agents/)
+- [Gemini API: function calling](https://ai.google.dev/gemini-api/docs/function-calling)
+- [Model Context Protocol: introduction](https://modelcontextprotocol.io/docs/getting-started/intro)
+- [LangGraph Quickstart](https://langchain-ai.github.io/langgraph/tutorials/introduction/)
+- [CrewAI Introduction](https://docs.crewai.com/en/introduction/)
+- [Pydantic AI overview](https://ai.pydantic.dev/)
+
+API-ключи в тренажёр не добавляются: уроки показывают безопасные локальные примеры и не выполняют настоящих запросов к LLM-провайдерам.

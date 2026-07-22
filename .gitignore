@@ -1,2 +1,5 @@
 .DS_Store
 vendor/pyodide/
+assets/route-connector-source-v1.png
+qa-implementation.png
+design-qa.md

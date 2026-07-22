@@ -3,16 +3,24 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Офлайн-курс Python и AI-агентов">
-  <title>Python → AI-агенты — офлайн-курс</title>
-  <link rel="stylesheet" href="styles.css">
+  <meta name="description" content="Онлайн-тренажёр Python и AI-агентов с реальным Python в браузере">
+  <title>Python → AI-агенты — тренажёр</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" referrerpolicy="no-referrer">
+  <link rel="stylesheet" href="styles.css?v=20260722-5">
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="#top" aria-label="На главную">PY <span>→</span> AGENTS</a>
+    <a class="brand" href="#top" aria-label="На главную"><span class="brand-mark"><i class="fa-solid fa-terminal" aria-hidden="true"></i></span> Python <b>→</b> AI-агенты</a>
+    <div class="top-progress" aria-label="Общий прогресс">
+      <span>Общий прогресс</span>
+      <div class="progress-track" aria-hidden="true"><div id="progress-fill" class="progress-fill"></div></div>
+      <strong id="progress-percent">0%</strong>
+    </div>
     <div class="topbar-actions">
+      <span class="streak-inline"><i class="fa-solid fa-fire" aria-hidden="true"></i> Серия: <b id="streak-inline-value">0 дней</b></span>
       <span id="runtime-status" class="runtime-status" role="status">Python: проверяется…</span>
-      <button id="theme-toggle" class="icon-button" type="button" aria-label="Переключить тему">☾</button>
+      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Переключить тему"><i class="fa-solid fa-sun" aria-hidden="true"></i><span id="theme-text">Светлая тема</span><span class="toggle-knob" aria-hidden="true"></span></button>
     </div>
   </header>
 
@@ -20,10 +28,15 @@
     <aside class="course-nav" aria-label="Навигация по урокам">
       <div class="nav-heading">
         <p class="eyebrow">ТВОЙ МАРШРУТ</p>
-        <strong id="progress-label">0 из 30 уроков</strong>
+        <strong id="progress-label">Начни с первого шага</strong>
       </div>
-      <div class="progress-track" aria-hidden="true"><div id="progress-fill" class="progress-fill"></div></div>
+      <section id="sprint-plan" class="sprint-plan" aria-label="Спринт на три дня"></section>
       <nav id="roadmap" class="roadmap"></nav>
+      <section class="streak-card" aria-label="Серия прохождения">
+        <div class="streak-card-heading"><span><i class="fa-solid fa-fire" aria-hidden="true"></i> Серия</span><strong id="streak-value">0 дней</strong></div>
+        <p>Занимайся каждый день, чтобы не прерывать серию.</p>
+        <div id="streak-days" class="streak-days" aria-label="Дни недели"></div>
+      </section>
       <button id="reset-progress" class="reset-button" type="button">Сбросить прогресс</button>
     </aside>
 
@@ -33,8 +46,8 @@
   <template id="locked-template">
     <div class="empty-state"><div class="lock-art">🔒</div><h1>Урок пока закрыт</h1><p>Заверши предыдущий урок: пройди тест минимум на 70% и выполни упражнение.</p></div>
   </template>
-  <script src="vendor/pyodide/pyodide.js"></script>
-  <script src="assets/course-data.js"></script>
-  <script src="app.js"></script>
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
+  <script src="assets/course-data.js?v=20260722-4"></script>
+  <script src="app.js?v=20260722-6"></script>
 </body>
 </html>
