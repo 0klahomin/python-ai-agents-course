@@ -3,6 +3,8 @@ const assert = require('node:assert/strict');
 
 const {
   COURSE,
+  SPRINT_DAYS,
+  SPRINT_LESSON_IDS,
   TEST_PASSING_PERCENT,
   evaluateAnswers,
   isLessonUnlocked,
@@ -33,14 +35,15 @@ test('quiz evaluation requires at least 70 percent', () => {
   assert.deepEqual(evaluateAnswers(questions, [0, 1, 1, 1, 1]), { correct: 3, percent: 60, passed: false });
 });
 
-test('three-day sprint unlocks only its next practical step', () => {
+test('one-day sprint unlocks only its next practical step', () => {
+  assert.equal(SPRINT_DAYS.length, 1);
+  assert.deepEqual(SPRINT_LESSON_IDS, [1, 8, 15, 16, 35, 37, 42]);
   assert.equal(isLessonUnlocked(1, []), true);
-  assert.equal(isLessonUnlocked(2, []), false);
-  assert.equal(isLessonUnlocked(2, [1]), true);
-  assert.equal(isLessonUnlocked(6, [1, 2]), false);
-  assert.equal(isLessonUnlocked(6, [1, 2, 3]), true);
-  assert.equal(isLessonUnlocked(12, [1, 2, 3, 6, 8]), true);
-  assert.equal(isLessonUnlocked(4, [1, 2, 3]), false);
+  assert.equal(isLessonUnlocked(8, []), false);
+  assert.equal(isLessonUnlocked(8, [1]), true);
+  assert.equal(isLessonUnlocked(15, [1, 8]), true);
+  assert.equal(isLessonUnlocked(35, [1, 8, 15, 16]), true);
+  assert.equal(isLessonUnlocked(2, [1]), false);
 });
 
 test('practice validator reports matching output and required code snippets', () => {
