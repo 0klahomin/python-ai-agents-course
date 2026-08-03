@@ -35,15 +35,16 @@ test('quiz evaluation requires at least 70 percent', () => {
   assert.deepEqual(evaluateAnswers(questions, [0, 1, 1, 1, 1]), { correct: 3, percent: 60, passed: false });
 });
 
-test('one-day sprint unlocks only its next practical step', () => {
-  assert.equal(SPRINT_DAYS.length, 1);
-  assert.deepEqual(SPRINT_LESSON_IDS, [1, 8, 15, 16, 35, 37, 42]);
+test('two-to-three-day sprint unlocks only its next practical step', () => {
+  assert.equal(SPRINT_DAYS.length, 3);
+  assert.deepEqual(SPRINT_LESSON_IDS, [1, 2, 3, 4, 6, 8, 12, 15, 16, 17, 23, 35, 37, 42]);
   assert.equal(isLessonUnlocked(1, []), true);
-  assert.equal(isLessonUnlocked(8, []), false);
-  assert.equal(isLessonUnlocked(8, [1]), true);
-  assert.equal(isLessonUnlocked(15, [1, 8]), true);
-  assert.equal(isLessonUnlocked(35, [1, 8, 15, 16]), true);
-  assert.equal(isLessonUnlocked(2, [1]), false);
+  assert.equal(isLessonUnlocked(2, []), false);
+  assert.equal(isLessonUnlocked(2, [1]), true);
+  assert.equal(isLessonUnlocked(8, [1, 2, 3, 4, 6]), true);
+  assert.equal(isLessonUnlocked(15, [1, 2, 3, 4, 6, 8, 12]), true);
+  assert.equal(isLessonUnlocked(35, [1, 2, 3, 4, 6, 8, 12, 15, 16, 17, 23]), true);
+  assert.equal(isLessonUnlocked(5, [1]), false);
 });
 
 test('practice validator reports matching output and required code snippets', () => {

@@ -78,13 +78,41 @@
   ];
   COURSE.push(...MODERN_AGENT_LESSONS);
 
+  const CORE_EXTRA_DRILLS = {
+    15: [practice('Сделай список messages с одним user-сообщением и выведи его роль.', 'messages = [{"role": "user", "content": "Привет"}]\nprint(messages[0]["role"])', 'user', ['messages', 'print'])],
+    16: [practice('Выведи результат условного инструмента из переменной tool_result.', 'tool_result = "готово"\nprint(tool_result)', 'готово', ['tool_result', 'print'])],
+    17: [practice('Сделай два шага цикла агента и выведи их количество.', 'steps = 0\nwhile steps < 2:\n    steps += 1\nprint(steps)', '2', ['while', 'steps'])],
+    23: [practice('Получи название инструмента из словаря tools.', 'tools = {"search": "поиск"}\nprint(tools["search"])', 'поиск', ['tools', 'print'])],
+    35: [practice('Достань источник из контекста агента.', 'context = {"source": "docs"}\nprint(context["source"])', 'docs', ['context', 'print'])],
+    37: [practice('Создай инструмент tool_status, который возвращает status = ok.', 'def tool_status():\n    return {"status": "ok"}\n\nprint(tool_status()["status"])', 'ok', ['def', 'return'])],
+    42: [practice('Проверь два успешных сценария и выведи их количество.', 'checks = ["ok", "ok"]\nprint(len(checks))', '2', ['checks', 'len'])],
+  };
+  Object.entries(CORE_EXTRA_DRILLS).forEach(([id, drills]) => {
+    const target = COURSE.find((item) => item.id === Number(id));
+    if (target) target.practice.push(...drills);
+  });
+
   const SPRINT_DAYS = [
     {
       day: 1,
-      title: 'Интенсив: агент за один день',
-      duration: '3–5 часов · 7 шагов',
-      outcome: 'Понимаешь, как с ИИ собрать, проверить и показать клиенту безопасный агентный прототип.',
-      lessons: [1, 8, 15, 16, 35, 37, 42],
+      title: 'Python с нуля',
+      duration: '2–3 часа · 5 шагов',
+      outcome: 'Понимаешь данные, условия, циклы и функции — основу любого AI-проекта.',
+      lessons: [1, 2, 3, 4, 6],
+    },
+    {
+      day: 2,
+      title: 'Данные и первый агент',
+      duration: '2–3 часа · 5 шагов',
+      outcome: 'Читаешь JSON, понимаешь запрос к модели и собираешь цикл принятия решений.',
+      lessons: [8, 12, 15, 16, 17],
+    },
+    {
+      day: 3,
+      title: 'Инструменты и первый заказ',
+      duration: '2–3 часа · 4 шага',
+      outcome: 'Проектируешь инструменты, контекст и проверку результата перед разговором с клиентом.',
+      lessons: [23, 35, 37, 42],
     },
   ];
   const SPRINT_LESSON_IDS = SPRINT_DAYS.flatMap((day) => day.lessons);
