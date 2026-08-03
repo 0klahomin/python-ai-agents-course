@@ -12,10 +12,20 @@
     { lessonId: 23, section: '7. Инструменты агентов', title: 'Работа с API и внешними данными' },
     { lessonId: COURSE.length, section: '8. Проект', title: 'Создаём и выпускаем AI-агента' },
   ];
-  const defaultState = () => ({ completed: [], quizzes: {}, attempts: {}, practice: {}, current: 1, theme: 'light', streak: 0, lastStudyDate: '' });
+  const DEEP_THEORY = {
+    1: { intro: 'Python — это язык, в котором мы описываем компьютеру данные и действия. Тебе не нужно помнить весь синтаксис: важно узнавать основные конструкции, понимать результат и уметь точно попросить ИИ объяснить непонятное место.', sections: [['Переменная', 'Имя связывается со значением: name = "Мира". Позже программа обращается к name, а не к самому тексту. Значение может быть числом, строкой, списком или логическим флагом.'], ['Типы', 'int — целые числа, float — дроби, str — текст, bool — True/False. Тип влияет на доступные операции: строку нельзя бездумно сложить с числом.'], ['Работа с ИИ', 'Проси ИИ сначала назвать входные данные, шаги и ожидаемый вывод. После генерации проверь код маленьким примером и задай вопрос: «Почему здесь именно этот тип?»']] },
+    8: { intro: 'Функция — отдельный именованный кусок логики. Она превращает повторяющееся действие в инструмент, который можно вызвать из агента, протестировать отдельно и заменить без переписывания всей программы.', sections: [['Вход', 'Параметры — данные, которые функция получает. Хорошая функция явно говорит, что ей нужно: def greet(name):.'], ['Выход', 'return возвращает значение вызывающему коду. print только показывает текст человеку и обычно не подходит как результат инструмента.'], ['Проверка', 'Попроси ИИ написать три тестовых случая: обычный, пустой или неправильный. Так ты видишь не только красивый пример, но и границы поведения.']] },
+    15: { intro: 'LLM API — это обычный запрос к внешнему сервису: приложение отправляет модель, инструкции и сообщения, а получает ответ. Токен не является частью логики урока и никогда не должен попадать в браузерный код или Git.', sections: [['Сообщения', 'system задаёт правила, user содержит задачу, assistant — предыдущий ответ, tool — результат действия. История превращает отдельные запросы в разговор.'], ['Запрос и ответ', 'Нужно обработать таймаут, ошибку сети и неожиданный формат ответа. Не принимай любой текст модели за доказанно верный результат.'], ['Работа с ИИ', 'Попроси ИИ составить контракт: какие поля приходят на вход, какой ответ нужен и что делать при ошибке. Это полезнее, чем просить «сделай весь проект».']] },
+    16: { intro: 'Агент — это цикл принятия решений вокруг модели. Модель выбирает следующий шаг, приложение вызывает разрешённый инструмент, возвращает результат в контекст, и цикл повторяется до понятного финального ответа.', sections: [['Цикл', 'Задача → план → вызов инструмента → наблюдение → проверка результата → ответ. У цикла должен быть лимит шагов, иначе ошибка может превратиться в бесконечные повторы.'], ['Инструмент', 'Инструмент делает конкретное действие: поиск, расчёт, чтение заявки. Он не должен обладать лишними правами и должен возвращать предсказуемую структуру.'], ['Граница', 'Модель предлагает действие, но приложение решает, разрешено ли его выполнять. Нельзя позволять модели напрямую удалять данные, отправлять деньги или письма без проверки.']] },
+    35: { intro: 'Контекст — это рабочая память текущего запроса. Чем больше лишнего текста, тем труднее модели удерживать правила. Хорошая система передаёт только задачу, нужные факты, историю и результаты инструментов.', sections: [['System', 'Системная инструкция задаёт роль, стиль, ограничения и критерии результата. Она не заменяет проверки в коде: важные правила должны быть продублированы guardrails.'], ['Источники', 'Если агент работает с документами, передай найденные фрагменты и их источники. Не проси модель угадывать то, чего нет в контексте.'], ['Промпт для ИИ', 'Проси сначала объяснить допущения и план, затем написать маленькую функцию. Так проще понять решение и исправить один участок.']] },
+    37: { intro: 'Function calling — это не магия, а согласованный контракт между моделью и обычной функцией Python. Модель выбирает имя и аргументы, приложение проверяет их, запускает функцию и отправляет результат обратно.', sections: [['Схема', 'У инструмента есть имя, описание, параметры и типы. Чем точнее описание, тем меньше двусмысленных вызовов.'], ['Валидация', 'Проверяй обязательные поля, диапазоны и права доступа до выполнения. Неверный аргумент должен дать безопасную ошибку, а не случайное действие.'], ['Декомпозиция', 'Один инструмент — одно понятное действие. Попроси ИИ сначала показать JSON-вызов и отдельно объяснить, какая строка Python его обрабатывает.']] },
+    42: { intro: 'Перед первым заказом важен не самый длинный код, а доказуемая надёжность. Сделай маленький сценарий, набор примеров, понятный README и покажи, как система ведёт себя при ошибке.', sections: [['Тесты', 'Составь 5–10 типичных запросов и несколько плохих входов. Запиши ожидаемый результат и сравнивай ответы после каждого изменения.'], ['Наблюдаемость', 'Логируй шаг, имя инструмента, длительность и тип ошибки. Не записывай токены, пароли и лишние персональные данные.'], ['Передача клиенту', 'Опиши задачу, ограничения, запуск, переменные окружения и что именно проверено. Клиент покупает понятный результат, а не обещание «ИИ всё сделает».']] },
+  };
+  const defaultState = () => ({ completed: [], quizzes: {}, attempts: {}, practice: {}, current: 1, screen: 'home', theme: 'light', streak: 0, lastStudyDate: '' });
   let state = loadState();
   let pyodide = null;
   let loadingPyodide = null;
+  let practiceFlow = null;
 
   const $ = (selector) => document.querySelector(selector);
   function loadState() {
@@ -52,8 +62,11 @@
     return false;
   }
   function applyTheme() {
-    document.body.classList.toggle('dark', state.theme === 'dark');
-    $('#theme-text').textContent = state.theme === 'dark' ? 'Тёмная тема' : 'Светлая тема';
+    document.body.classList.remove('dark', 'theme-light', 'theme-lavender', 'theme-pink', 'theme-blue', 'theme-graphite');
+    document.body.classList.add(`theme-${state.theme}`);
+    document.body.classList.toggle('dark', state.theme === 'dark' || state.theme === 'graphite');
+    const labels = { light: 'Светлая тема', dark: 'Тёмная тема', lavender: 'Сиреневая тема', pink: 'Розовая тема', blue: 'Синяя тема', graphite: 'Графитовая тема' };
+    $('#theme-text').textContent = labels[state.theme] || labels.light;
   }
   function renderRoadmap() {
     const roadmap = $('#roadmap');
@@ -91,7 +104,29 @@
       return `<div class="streak-day ${active ? 'active' : ''}"><span>${active ? '<i class="fa-solid fa-check" aria-hidden="true"></i>' : ''}</span>${day}</div>`;
     }).join('');
   }
+  function renderHome() {
+    document.body.classList.remove('focus-mode');
+    const current = currentLesson();
+    $('#lesson-view').innerHTML = `<div class="home-screen"><p class="lesson-kicker">ОДНОДНЕВНЫЙ ИНТЕНСИВ · 3–5 ЧАСОВ</p><h1 class="home-title">Python → AI-агенты</h1><p class="home-lead">Пойми, как ставить задачи ИИ, читать его код, проверять результат и собирать простых агентов для первых заказов.</p><div class="home-progress"><div><span>Твой прогресс</span><strong>${state.completed.length} из ${SPRINT_LESSON_IDS.length} шагов</strong></div><div class="progress-track"><div class="progress-fill" style="width:${Math.round((state.completed.filter((id) => SPRINT_LESSON_IDS.includes(id)).length / SPRINT_LESSON_IDS.length) * 100)}%"></div></div></div><section class="theme-picker"><div class="section-heading"><div><h2>Выбери спокойную тему</h2><p class="theory-text">Настрой цвет до начала — потом его можно сменить в шапке.</p></div></div><div class="theme-grid">${[['light','Белая'],['lavender','Сиреневая'],['pink','Розовая'],['blue','Синяя'],['graphite','Графитовая'],['dark','Тёмная']].map(([id, label]) => `<button class="theme-card ${state.theme === id ? 'selected' : ''}" type="button" data-theme-choice="${id}"><span class="theme-preview theme-preview-${id}"><i></i><b></b><em></em></span><strong>${label}</strong><small>Пример интерфейса</small></button>`).join('')}</div></section><button class="primary-button home-start" id="start-course"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i> ${state.completed.length ? `Продолжить: ${escaped(current.title)}` : 'Начать курс'}</button></div>`;
+    $('#lesson-view').querySelectorAll('[data-theme-choice]').forEach((button) => button.addEventListener('click', () => { state.theme = button.dataset.themeChoice; saveState(); applyTheme(); renderHome(); }));
+    $('#start-course').addEventListener('click', () => { state.screen = 'lesson'; saveState(); renderLesson(); });
+  }
+  function renderDeepTheory(lesson) {
+    const guide = DEEP_THEORY[lesson.id];
+    if (!guide) return `<div class="theory-reading"><p>${escaped(lesson.theory)}</p></div>`;
+    return `<div class="theory-reading"><p>${escaped(guide.intro)}</p>${guide.sections.map(([title, text]) => `<div class="theory-block"><strong>${escaped(title)}</strong><p>${escaped(text)}</p></div>`).join('')}</div>`;
+  }
+  function setLessonStage(lesson) {
+    const theory = document.querySelector('.theory-card'); const ai = document.querySelector('.ai-workflow'); const quiz = document.querySelector('.quiz-card'); const practice = document.querySelector('.practice-card');
+    if (!theory || !quiz || !practice) return;
+    theory.insertAdjacentHTML('beforeend', '<button class="primary-button theory-next" id="theory-next" type="button">К тесту <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>');
+    const quizPassed = state.quizzes[lesson.id]?.passed;
+    quiz.hidden = !quizPassed; practice.hidden = !quizPassed; if (ai) ai.hidden = Boolean(quizPassed);
+    $('#theory-next').addEventListener('click', () => { theory.hidden = true; if (ai) ai.hidden = true; quiz.hidden = false; });
+  }
   function renderLesson() {
+    if (state.screen === 'home') return renderHome();
+    document.body.classList.add('focus-mode');
     const lesson = currentLesson();
     if (!isLessonUnlocked(lesson.id, state.completed)) {
       $('#lesson-view').replaceChildren($('#locked-template').content.cloneNode(true)); return;
@@ -105,10 +140,29 @@
     }).join('');
     const completion = isComplete(lesson) ? `<section class="card completion"><span class="completion-icon">✓</span><div><h2>Урок пройден</h2><p>Следующий урок уже доступен в маршруте.</p></div></section>` : '';
     $('#lesson-view').innerHTML = `<header class="lesson-header"><div><p class="lesson-kicker">${escaped(lesson.badge)} · шаг интенсива</p><h1 class="lesson-title">${escaped(lesson.title)}</h1></div><span class="lesson-count">${lesson.practice.length} практика</span></header><section class="card theory-card"><h2>1. Пойми принцип</h2><div class="theory-grid"><p class="theory-text">${escaped(lesson.theory)}</p><pre class="code-example"><code>${escaped(lesson.example)}</code></pre></div></section><aside class="ai-workflow"><span><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i> Работай с ИИ как с напарником</span><p>Спроси: «Объясни план решения простыми шагами. Напиши черновик и прокомментируй каждую строку». Затем запусти код, найди ошибку и попроси ИИ объяснить именно её — не переходи дальше, пока можешь пересказать логику своими словами.</p></aside><section class="card quiz-card"><div class="section-heading"><div><h2>2. Проверь себя</h2><p class="theory-text">Три вопроса · проходной балл 70%</p></div></div><form id="quiz-form"><div class="quiz-list">${quiz}</div><button class="primary-button" type="submit"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Проверить тест</button><p class="feedback ${previousQuiz?.passed ? 'success' : ''}" id="quiz-feedback">${previousQuiz ? `Последний результат: ${previousQuiz.percent}%. ${previousQuiz.passed ? '✓ Тест зачтён.' : 'Попробуй ещё раз.'}` : ''}</p></form></section><section class="card practice-card"><div class="section-heading"><div><h2>3. Собери с ИИ и проверь</h2><p class="theory-text">Попроси ИИ дать черновик, затем разберись в нём и запусти код в браузере.</p></div><span class="practice-count">${lesson.practice.length} задания</span></div>${tasks}</section>${completion}`;
-    $('#quiz-form').addEventListener('submit', (event) => submitQuiz(event, lesson));
+    document.querySelector('.theory-card .theory-text').innerHTML = renderDeepTheory(lesson);
+    setLessonStage(lesson);
     $('#lesson-view').querySelectorAll('.run-code').forEach((button) => button.addEventListener('click', () => runPractice(lesson, Number(button.dataset.task), button)));
+    $('#lesson-view').querySelector('.lesson-header').insertAdjacentHTML('afterbegin', '<button class="home-button" id="home-button" type="button" aria-label="Вернуться на главную"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i></button>');
+    $('#home-button').addEventListener('click', goHome);
+    activateQuizFlow(lesson);
+    activatePracticeFlow(lesson);
   }
-  function selectLesson(id) { if (isLessonUnlocked(id, state.completed)) { state.current = id; saveState(); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); } }
+  function activateQuizFlow(lesson) {
+    const form = $('#quiz-form'); if (!form) return;
+    const questions = [...form.querySelectorAll('.quiz-question')]; const button = form.querySelector('button[type="submit"]'); const feedback = $('#quiz-feedback');
+    let cursor = 0; const answers = [];
+    const show = () => { questions.forEach((item, index) => { item.hidden = index !== cursor; item.classList.toggle('is-active', index === cursor); }); button.innerHTML = cursor === questions.length - 1 ? '<i class="fa-solid fa-check" aria-hidden="true"></i> Завершить тест' : '<i class="fa-solid fa-arrow-right" aria-hidden="true"></i> Ответить'; feedback.textContent = `Вопрос ${cursor + 1} из ${questions.length}`; feedback.className = 'feedback'; };
+    form.onsubmit = (event) => { event.preventDefault(); const selected = form.querySelector(`input[name="q${cursor}"]:checked`); if (!selected) { feedback.className = 'feedback error'; feedback.textContent = 'Выбери ответ, чтобы продолжить.'; return; } const answer = Number(selected.value); if (answer !== lesson.quiz[cursor].correct) { feedback.className = 'feedback error'; feedback.textContent = 'Пока нет. Разбери объяснение и попробуй ещё раз.'; return; } answers[cursor] = answer; cursor += 1; if (cursor < questions.length) return show(); const result = evaluateAnswers(lesson.quiz, answers); state.quizzes[lesson.id] = result; const completedNow = checkCompletion(lesson); saveState(); feedback.className = 'feedback success'; feedback.textContent = `✓ Тест пройден: ${result.percent}%.`; const quizCard = document.querySelector('.quiz-card'); const practiceCard = document.querySelector('.practice-card'); const ai = document.querySelector('.ai-workflow'); if (quizCard) quizCard.hidden = true; if (practiceCard) practiceCard.hidden = false; if (ai) ai.hidden = true; renderRoadmap(); if (completedNow) renderLesson(); };
+    show();
+  }
+  function activatePracticeFlow(lesson) {
+    const tasks = [...document.querySelectorAll('.practice-card .task')]; if (tasks.length < 2) return;
+    let cursor = 0; tasks.forEach((task, index) => { task.hidden = index !== 0; });
+    practiceFlow = { reveal(index) { if (index !== cursor || cursor >= tasks.length - 1) return; cursor += 1; tasks[cursor].hidden = false; tasks[cursor].scrollIntoView({ behavior: 'smooth', block: 'center' }); } };
+  }
+  function selectLesson(id) { if (isLessonUnlocked(id, state.completed)) { state.current = id; state.screen = 'lesson'; saveState(); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); } }
+  function goHome() { state.screen = 'home'; saveState(); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
   function submitQuiz(event, lesson) {
     event.preventDefault();
     const answers = lesson.quiz.map((_, index) => { const selected = document.querySelector(`input[name="q${index}"]:checked`); return selected ? Number(selected.value) : -1; });
@@ -135,6 +189,7 @@
       await runtime.runPythonAsync(code); const resultOutput = lines.join('\n'); output.textContent = resultOutput || '(нет вывода)';
       const validation = validatePractice(task, code, resultOutput); state.practice[key] = { code, output: resultOutput, passed: validation.passed };
       feedback.className = `feedback ${validation.passed ? 'success' : 'error'}`; feedback.textContent = validation.passed ? '✓ Задание выполнено.' : `Пока не зачтено: ${validation.reason}`;
+      if (validation.passed) practiceFlow?.reveal(taskIndex);
       const completedNow = checkCompletion(lesson); saveState(); renderRoadmap(); if (completedNow) renderLesson();
     } catch (error) {
       const message = error?.message || String(error); output.textContent = message; state.practice[key] = { code, output: message, passed: false }; feedback.className = 'feedback error'; feedback.textContent = 'Python сообщил об ошибке. Исправь код и попробуй снова.'; saveState();
@@ -146,7 +201,7 @@
     schedule(() => ensurePyodide().catch(() => {}));
   }
   function render() { applyTheme(); renderSprint(); renderRoadmap(); renderStreak(); renderLesson(); }
-  $('#theme-toggle').addEventListener('click', () => { state.theme = state.theme === 'dark' ? 'light' : 'dark'; saveState(); applyTheme(); });
+  $('#theme-toggle').addEventListener('click', () => { const themes = ['light', 'lavender', 'pink', 'blue', 'graphite', 'dark']; state.theme = themes[(themes.indexOf(state.theme) + 1) % themes.length]; saveState(); applyTheme(); if (state.screen === 'home') renderHome(); });
   $('#reset-progress').addEventListener('click', () => { if (window.confirm('Сбросить весь прогресс этого курса на этом устройстве?')) { state = defaultState(); saveState(); render(); } });
   if (window.loadPyodide) setRuntime('Python: подготавливается…'); else setRuntime('Python: CDN недоступен', 'error');
   render();
