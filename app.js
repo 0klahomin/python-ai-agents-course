@@ -52,6 +52,13 @@
     state.lastStudyDate = today; saveState();
   }
   function escaped(value) { return String(value).replace(/[&<>"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[char]); }
+  function countWord(value, forms) {
+    const remainder = Math.abs(value) % 100; const unit = remainder % 10;
+    if (remainder > 10 && remainder < 20) return forms[2];
+    if (unit === 1) return forms[0];
+    if (unit >= 2 && unit <= 4) return forms[1];
+    return forms[2];
+  }
   function starterForTask(task) {
     const hint = task.required?.length ? `# Подсказка: используй ${task.required.join(', ')}` : '# Начни с переменных и print()';
     return `# Напиши решение здесь\n${hint}\n`;
@@ -117,18 +124,21 @@
   function activateParticleTrail() {
     const screen = $('#home-screen'); const field = $('#particle-field');
     if (!screen || !field || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const symbols = ['fa-code', 'fa-terminal', 'fa-brackets-curly', 'fa-wand-magic-sparkles', 'fa-bolt'];
+    const symbols = ['fa-code', 'fa-terminal', 'fa-code-branch', 'fa-wand-magic-sparkles', 'fa-bolt', 'fa-database', 'fa-gear', 'fa-cubes', 'fa-brain', 'fa-circle-nodes'];
     let last = 0;
     screen.addEventListener('pointermove', (event) => {
-      if (event.pointerType === 'touch' || Date.now() - last < 52) return;
+      if (event.pointerType === 'touch' || Date.now() - last < 26) return;
       last = Date.now();
-      const bounds = screen.getBoundingClientRect(); const particle = document.createElement('i');
-      particle.className = `particle-symbol fa-solid ${symbols[Math.floor(Math.random() * symbols.length)]}`;
-      particle.style.left = `${event.clientX - bounds.left}px`; particle.style.top = `${event.clientY - bounds.top}px`;
-      field.append(particle);
-      const driftX = (Math.random() - .5) * 76; const driftY = -18 - Math.random() * 62;
-      particle.animate([{ transform: 'translate(-50%, -50%) scale(.9)', opacity: .48 }, { transform: `translate(calc(-50% + ${driftX}px), calc(-50% + ${driftY}px)) scale(1.08) rotate(${(Math.random() - .5) * 40}deg)`, opacity: 0 }], { duration: 620, easing: 'cubic-bezier(0.23, 1, 0.32, 1)', fill: 'forwards' }).finished.finally(() => particle.remove());
-      while (field.childElementCount > 26) field.firstElementChild?.remove();
+      const bounds = screen.getBoundingClientRect(); const x = event.clientX - bounds.left; const y = event.clientY - bounds.top;
+      for (let index = 0; index < 3; index += 1) {
+        const particle = document.createElement('i');
+        particle.className = `particle-symbol fa-solid ${symbols[Math.floor(Math.random() * symbols.length)]}`;
+        particle.style.left = `${x + (Math.random() - .5) * 16}px`; particle.style.top = `${y + (Math.random() - .5) * 16}px`;
+        particle.style.fontSize = `${8 + Math.floor(Math.random() * 7)}px`; field.append(particle);
+        const driftX = (Math.random() - .5) * 144; const driftY = -24 - Math.random() * 104;
+        particle.animate([{ transform: 'translate(-50%, -50%) scale(.88)', opacity: .42 }, { transform: `translate(calc(-50% + ${driftX}px), calc(-50% + ${driftY}px)) scale(1.12) rotate(${(Math.random() - .5) * 64}deg)`, opacity: 0 }], { duration: 820 + Math.random() * 260, easing: 'cubic-bezier(0.23, 1, 0.32, 1)', fill: 'forwards' }).finished.finally(() => particle.remove());
+      }
+      while (field.childElementCount > 96) field.firstElementChild?.remove();
     });
   }
   function lessonProgressMarkup(lesson, theoryDone = false, quizDone = 0) {
@@ -176,10 +186,10 @@
     const tasks = lesson.practice.map((task, index) => {
       const key = `${lesson.id}:${index}`; const record = state.practice[key] || {}; const attempts = state.attempts[key] || 0;
       const draft = record.code && record.code !== task.starter ? record.code : starterForTask(task);
-      return `<div class="task"><p><strong>Задание ${index + 1}.</strong> ${escaped(task.instruction)}</p><div class="task-workspace"><div class="editor-panel"><textarea class="editor" id="editor-${index}" spellcheck="false" aria-label="Код для задания ${index + 1}">${escaped(draft)}</textarea><div class="run-row"><button class="primary-button run-code" type="button" data-task="${index}"><i class="fa-solid fa-play" aria-hidden="true"></i> Запустить</button><span class="attempts">Попыток: <span id="attempts-${index}">${attempts}</span></span></div></div><div class="output-wrap"><span class="output-label">Вывод Python</span><pre class="output" id="output-${index}">${escaped(record.output || 'Нажми «Запустить», чтобы выполнить код.')}</pre></div></div><p class="feedback ${record.passed ? 'success' : ''}" id="practice-feedback-${index}">${record.passed ? '✓ Задание выполнено.' : ''}</p></div>`;
+      return `<div class="task"><p><strong>Задание ${index + 1}.</strong> ${escaped(task.instruction)}</p><div class="task-workspace"><div class="editor-panel"><textarea class="editor" id="editor-${index}" spellcheck="false" aria-label="Код для задания ${index + 1}">${escaped(draft)}</textarea><div class="run-row"><button class="primary-button run-code" type="button" data-task="${index}"><i class="fa-solid fa-play" aria-hidden="true"></i> Запустить</button><span class="attempts">Число попыток: <span id="attempts-${index}">${attempts}</span></span></div></div><div class="output-wrap"><span class="output-label">Вывод Python</span><pre class="output" id="output-${index}">${escaped(record.output || 'Нажми «Запустить», чтобы выполнить код.')}</pre></div></div><p class="feedback ${record.passed ? 'success' : ''}" id="practice-feedback-${index}">${record.passed ? '✓ Задание выполнено.' : ''}</p></div>`;
     }).join('');
     const completion = isComplete(lesson) ? `<section class="card completion"><span class="completion-icon">✓</span><div><h2>Урок пройден</h2><p>Следующий урок уже доступен в маршруте.</p></div></section>` : '';
-    $('#lesson-view').innerHTML = `<header class="lesson-header"><div><p class="lesson-kicker">${escaped(lesson.badge)} · шаг интенсива</p><h1 class="lesson-title">${escaped(lesson.title)}</h1></div>${lessonProgressMarkup(lesson, Boolean(previousQuiz?.passed), previousQuiz?.passed ? lesson.quiz.length : 0)}</header><section class="card theory-card"><h2>1. Пойми принцип</h2><div class="theory-grid"><p class="theory-text">${escaped(lesson.theory)}</p><pre class="code-example"><code>${escaped(lesson.example)}</code></pre></div></section><aside class="ai-workflow"><span><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i> Работай с ИИ как с напарником</span><p>Спроси: «Объясни план решения простыми шагами. Напиши черновик и прокомментируй каждую строку». Затем запусти код, найди ошибку и попроси ИИ объяснить именно её — не переходи дальше, пока можешь пересказать логику своими словами.</p></aside><section class="card quiz-card"><div class="section-heading"><div><h2>2. Проверь себя</h2><p class="theory-text">Три вопроса · проходной балл 70%</p></div></div><form id="quiz-form"><div class="quiz-list">${quiz}</div><button class="primary-button" type="submit"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Проверить тест</button><p class="feedback ${previousQuiz?.passed ? 'success' : ''}" id="quiz-feedback">${previousQuiz ? `Последний результат: ${previousQuiz.percent}%. ${previousQuiz.passed ? '✓ Тест зачтён.' : 'Попробуй ещё раз.'}` : ''}</p></form></section><section class="card practice-card"><div class="section-heading"><div><h2>3. Собери с ИИ и проверь</h2><p class="theory-text">Попроси ИИ дать черновик, затем разберись в нём и запусти код в браузере.</p></div><span class="practice-count">${lesson.practice.length} задания</span></div>${tasks}</section>${completion}`;
+    $('#lesson-view').innerHTML = `<header class="lesson-header"><div><p class="lesson-kicker">${escaped(lesson.badge)} · шаг интенсива</p><h1 class="lesson-title">${escaped(lesson.title)}</h1></div>${lessonProgressMarkup(lesson, Boolean(previousQuiz?.passed), previousQuiz?.passed ? lesson.quiz.length : 0)}</header><section class="card theory-card"><h2>1. Пойми принцип</h2><div class="theory-grid"><p class="theory-text">${escaped(lesson.theory)}</p><pre class="code-example"><code>${escaped(lesson.example)}</code></pre></div></section><aside class="ai-workflow"><span><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i> Работай с ИИ как с напарником</span><p>Спроси: «Объясни план решения простыми шагами. Напиши черновик и прокомментируй каждую строку». Затем запусти код, найди ошибку и попроси ИИ объяснить именно её — не переходи дальше, пока можешь пересказать логику своими словами.</p></aside><section class="card quiz-card"><div class="section-heading"><div><h2>2. Проверь себя</h2><p class="theory-text">Три вопроса · проходной балл 70%</p></div></div><form id="quiz-form"><div class="quiz-list">${quiz}</div><button class="primary-button" type="submit"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Проверить тест</button><p class="feedback ${previousQuiz?.passed ? 'success' : ''}" id="quiz-feedback">${previousQuiz ? `Последний результат: ${previousQuiz.percent}%. ${previousQuiz.passed ? '✓ Тест зачтён.' : 'Попробуй ещё раз.'}` : ''}</p></form></section><section class="card practice-card"><div class="section-heading"><div><h2>3. Собери с ИИ и проверь</h2><p class="theory-text">Попроси ИИ дать черновик, затем разберись в нём и запусти код в браузере.</p></div><span class="practice-count">${lesson.practice.length} ${countWord(lesson.practice.length, ['задание', 'задания', 'заданий'])}</span></div>${tasks}</section>${completion}`;
     document.querySelector('.theory-card .theory-text').innerHTML = renderDeepTheory(lesson);
     setLessonStage(lesson);
     $('#lesson-view').querySelectorAll('.run-code').forEach((button) => button.addEventListener('click', () => runPractice(lesson, Number(button.dataset.task), button)));
