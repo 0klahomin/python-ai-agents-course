@@ -7,7 +7,7 @@
   <title>Python → AI-агенты — тренажёр</title>
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" referrerpolicy="no-referrer">
-  <link rel="stylesheet" href="styles.css?v=20260804-1">
+  <link rel="stylesheet" href="styles.css?v=20260804-3">
 </head>
 <body>
   <header class="topbar">
@@ -17,11 +17,7 @@
       <div class="progress-track" aria-hidden="true"><div id="progress-fill" class="progress-fill"></div></div>
       <strong id="progress-percent">0%</strong>
     </div>
-    <div class="topbar-actions">
-      <span class="streak-inline"><i class="fa-solid fa-fire" aria-hidden="true"></i> Серия: <b id="streak-inline-value">0 дней</b></span>
-      <span id="runtime-status" class="runtime-status" role="status">Python: проверяется…</span>
-      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Переключить тему"><i class="fa-solid fa-sun" aria-hidden="true"></i><span id="theme-text">Светлая тема</span><span class="toggle-knob" aria-hidden="true"></span></button>
-    </div>
+    <div class="topbar-status"><span id="runtime-status" class="runtime-status" role="status">Python: проверяется…</span></div>
   </header>
 
   <main id="top" class="layout">
@@ -48,6 +44,6 @@
   </template>
   <script src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
   <script src="assets/course-data.js?v=20260804-2"></script>
-  <script src="app.js?v=20260804-2"></script>
+  <script src="app.js?v=20260804-3"></script>
 </body>
 </html>

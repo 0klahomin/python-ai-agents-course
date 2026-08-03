@@ -28,7 +28,7 @@
     23: { intro: 'Инструмент агента — это обычная функция с понятным контрактом. Агент выбирает её, но приложение проверяет аргументы и права до запуска.', sections: [['Контракт', 'Опиши имя, назначение, обязательные поля и формат результата. Один инструмент должен решать одну задачу.'], ['Ошибки', 'Верни структурированную ошибку вместо падения всего цикла. Модель должна понять, что можно исправить, а что нельзя повторять.'], ['Заказ', 'Для клиента формулируй инструмент через результат: найти заявку, рассчитать сумму, подготовить черновик — не через абстрактное «добавить ИИ».']] },
     42: { intro: 'Перед первым заказом важен не самый длинный код, а доказуемая надёжность. Сделай маленький сценарий, набор примеров, понятный README и покажи, как система ведёт себя при ошибке.', sections: [['Тесты', 'Составь 5–10 типичных запросов и несколько плохих входов. Запиши ожидаемый результат и сравнивай ответы после каждого изменения.'], ['Наблюдаемость', 'Логируй шаг, имя инструмента, длительность и тип ошибки. Не записывай токены, пароли и лишние персональные данные.'], ['Передача клиенту', 'Опиши задачу, ограничения, запуск, переменные окружения и что именно проверено. Клиент покупает понятный результат, а не обещание «ИИ всё сделает».']] },
   };
-  const defaultState = () => ({ completed: [], quizzes: {}, attempts: {}, practice: {}, current: 1, screen: 'home', theme: 'classic', streak: 0, lastStudyDate: '' });
+  const defaultState = () => ({ completed: [], quizzes: {}, attempts: {}, practice: {}, current: 1, screen: 'home', theme: 'classic', themeSelected: false, streak: 0, lastStudyDate: '' });
   let state = loadState();
   let pyodide = null;
   let loadingPyodide = null;
@@ -39,7 +39,7 @@
     try {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY));
       const next = { ...defaultState(), ...(saved || {}), completed: Array.isArray(saved?.completed) ? saved.completed : [] };
-      if (next.theme === 'light' || !['classic', 'lavender', 'pink', 'blue', 'graphite', 'dark'].includes(next.theme)) next.theme = 'classic';
+      if (!next.themeSelected || !['classic', 'lavender', 'pink', 'blue', 'graphite', 'dark'].includes(next.theme)) next.theme = 'classic';
       return next;
     } catch { return defaultState(); }
   }
@@ -75,7 +75,7 @@
     document.body.classList.add(`theme-${state.theme}`);
     document.body.classList.toggle('dark', state.theme === 'dark' || state.theme === 'graphite');
     const labels = { classic: 'Классическая тема', light: 'Светлая тема', dark: 'Тёмная тема', lavender: 'Сиреневая тема', pink: 'Розовая тема', blue: 'Синяя тема', graphite: 'Графитовая тема' };
-    $('#theme-text').textContent = labels[state.theme] || labels.classic;
+    const themeText = $('#theme-text'); if (themeText) themeText.textContent = labels[state.theme] || labels.classic;
   }
   function renderRoadmap() {
     const roadmap = $('#roadmap');
@@ -106,20 +106,50 @@
   function renderStreak() {
     const streak = state.streak || 0;
     const label = `${streak} ${streak === 1 ? 'день' : streak >= 2 && streak <= 4 ? 'дня' : 'дней'}`;
-    $('#streak-value').textContent = label; $('#streak-inline-value').textContent = label;
+    $('#streak-value').textContent = label;
+    const inlineValue = $('#streak-inline-value'); if (inlineValue) inlineValue.textContent = label;
     const days = ['П', 'В', 'С', 'Ч', 'П', 'С', 'В']; const today = new Date().getDay(); const mondayIndex = today === 0 ? 6 : today - 1;
     $('#streak-days').innerHTML = days.map((day, index) => {
       const active = streak > 0 && index <= mondayIndex && mondayIndex - index < streak;
       return `<div class="streak-day ${active ? 'active' : ''}"><span>${active ? '<i class="fa-solid fa-check" aria-hidden="true"></i>' : ''}</span>${day}</div>`;
     }).join('');
   }
+  function activateParticleTrail() {
+    const screen = $('#home-screen'); const field = $('#particle-field');
+    if (!screen || !field || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const symbols = ['fa-code', 'fa-terminal', 'fa-brackets-curly', 'fa-wand-magic-sparkles', 'fa-bolt'];
+    let last = 0;
+    screen.addEventListener('pointermove', (event) => {
+      if (event.pointerType === 'touch' || Date.now() - last < 52) return;
+      last = Date.now();
+      const bounds = screen.getBoundingClientRect(); const particle = document.createElement('i');
+      particle.className = `particle-symbol fa-solid ${symbols[Math.floor(Math.random() * symbols.length)]}`;
+      particle.style.left = `${event.clientX - bounds.left}px`; particle.style.top = `${event.clientY - bounds.top}px`;
+      field.append(particle);
+      const driftX = (Math.random() - .5) * 76; const driftY = -18 - Math.random() * 62;
+      particle.animate([{ transform: 'translate(-50%, -50%) scale(.9)', opacity: .48 }, { transform: `translate(calc(-50% + ${driftX}px), calc(-50% + ${driftY}px)) scale(1.08) rotate(${(Math.random() - .5) * 40}deg)`, opacity: 0 }], { duration: 620, easing: 'cubic-bezier(0.23, 1, 0.32, 1)', fill: 'forwards' }).finished.finally(() => particle.remove());
+      while (field.childElementCount > 26) field.firstElementChild?.remove();
+    });
+  }
+  function lessonProgressMarkup(lesson, theoryDone = false, quizDone = 0) {
+    const practiceDone = lesson.practice.filter((_, index) => state.practice[`${lesson.id}:${index}`]?.passed).length;
+    const items = [{ label: 'Теория', done: theoryDone || Boolean(state.quizzes[lesson.id]?.passed) }]
+      .concat(lesson.quiz.map((_, index) => ({ label: `Тест ${index + 1}`, done: index < quizDone || Boolean(state.quizzes[lesson.id]?.passed) })))
+      .concat(lesson.practice.map((_, index) => ({ label: `Практика ${index + 1}`, done: index < practiceDone })));
+    return `<div class="lesson-progress" id="lesson-progress" aria-label="Прогресс урока">${items.map((item, index) => `<span class="lesson-step ${item.done ? 'done' : index === 0 && !theoryDone ? 'current' : ''}" title="${item.label}">${item.done ? '<i class="fa-solid fa-check" aria-hidden="true"></i>' : index + 1}</span>`).join('')}</div>`;
+  }
+  function updateLessonProgress(lesson, theoryDone = false, quizDone = 0) {
+    const progress = $('#lesson-progress'); if (progress) progress.outerHTML = lessonProgressMarkup(lesson, theoryDone, quizDone);
+  }
   function renderHome() {
     document.body.classList.remove('focus-mode');
     const current = currentLesson();
-    $('#lesson-view').innerHTML = `<div class="home-screen"><p class="lesson-kicker">ПРАКТИЧЕСКИЙ КУРС · 2–3 ДНЯ</p><h1 class="home-title">Python → AI-агенты</h1><p class="home-lead">Пойми Python с нуля, научись работать с ИИ как с напарником и собери основу для первых заказов — без лишнего интерфейсного шума.</p><div class="home-progress"><div><span>Твой прогресс</span><strong>${state.completed.length} из ${SPRINT_LESSON_IDS.length} шагов</strong></div><div class="progress-track"><div class="progress-fill" style="width:${Math.round((state.completed.filter((id) => SPRINT_LESSON_IDS.includes(id)).length / SPRINT_LESSON_IDS.length) * 100)}%"></div></div></div><button class="theme-change" id="home-theme-toggle" type="button"><i class="fa-solid fa-palette" aria-hidden="true"></i> Изменить тему</button><section class="theme-picker" id="theme-picker" hidden><div class="section-heading"><div><h2>Предпросмотр тем</h2><p class="theory-text">Выбери спокойный фон и акцент. Основная тема — чистая чёрно-белая классика.</p></div></div><div class="theme-grid">${[['classic','Классика'],['lavender','Сиреневая'],['pink','Розовая'],['blue','Синяя'],['graphite','Графитовая'],['dark','Тёмная']].map(([id, label]) => `<button class="theme-card ${state.theme === id ? 'selected' : ''}" type="button" data-theme-choice="${id}"><span class="theme-preview theme-preview-${id}"><i></i><b></b><em></em></span><strong>${label}</strong><small>Предпросмотр интерфейса</small></button>`).join('')}</div></section><button class="primary-button home-start" id="start-course"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i> ${state.completed.length ? `Продолжить: ${escaped(current.title)}` : 'Начать курс'}</button></div>`;
-    $('#home-theme-toggle').addEventListener('click', () => { const picker = $('#theme-picker'); picker.hidden = !picker.hidden; });
-    $('#lesson-view').querySelectorAll('[data-theme-choice]').forEach((button) => button.addEventListener('click', () => { state.theme = button.dataset.themeChoice; saveState(); applyTheme(); renderHome(); }));
+    $('#lesson-view').innerHTML = `<div class="home-screen" id="home-screen"><div class="particle-field" id="particle-field" aria-hidden="true"></div><div class="home-content"><p class="lesson-kicker">ПРАКТИЧЕСКИЙ КУРС · 2–3 ДНЯ</p><h1 class="home-title">Python → AI-агенты</h1><p class="home-lead">Пойми Python с нуля, научись работать с ИИ как с напарником и собери основу для первых заказов — без лишнего интерфейсного шума.</p><div class="home-progress"><div><span>Твой прогресс</span><strong>${state.completed.length} из ${SPRINT_LESSON_IDS.length} шагов</strong></div><div class="progress-track"><div class="progress-fill" style="width:${Math.round((state.completed.filter((id) => SPRINT_LESSON_IDS.includes(id)).length / SPRINT_LESSON_IDS.length) * 100)}%"></div></div></div><button class="settings-button" id="open-settings" type="button"><i class="fa-solid fa-gear" aria-hidden="true"></i> Настройки</button><button class="primary-button home-start" id="start-course"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i> ${state.completed.length ? `Продолжить: ${escaped(current.title)}` : 'Начать курс'}</button></div><section class="settings-panel" id="settings-panel" hidden><div class="section-heading"><div><p class="lesson-kicker">НАСТРОЙКИ</p><h2>Оформление</h2><p class="theory-text">По умолчанию — белый фон и чёрный акцент. Выбранная тема сохранится только на этом устройстве.</p></div><button class="settings-close" id="close-settings" type="button" aria-label="Закрыть настройки"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></div><div class="theme-grid">${[['classic','Классика'],['lavender','Сиреневая'],['pink','Розовая'],['blue','Синяя'],['graphite','Графитовая'],['dark','Тёмная']].map(([id, label]) => `<button class="theme-card ${state.theme === id ? 'selected' : ''}" type="button" data-theme-choice="${id}"><span class="theme-preview theme-preview-${id}"><i></i><b></b><em></em></span><strong>${label}</strong><small>Предпросмотр интерфейса</small></button>`).join('')}</div></section></div>`;
+    $('#open-settings').addEventListener('click', () => { $('#settings-panel').hidden = false; $('#open-settings').setAttribute('aria-expanded', 'true'); });
+    $('#close-settings').addEventListener('click', () => { $('#settings-panel').hidden = true; $('#open-settings').setAttribute('aria-expanded', 'false'); });
+    $('#lesson-view').querySelectorAll('[data-theme-choice]').forEach((button) => button.addEventListener('click', () => { state.theme = button.dataset.themeChoice; state.themeSelected = true; saveState(); applyTheme(); renderHome(); }));
     $('#start-course').addEventListener('click', () => { state.screen = 'lesson'; saveState(); renderLesson(); });
+    activateParticleTrail();
   }
   function renderDeepTheory(lesson) {
     const guide = DEEP_THEORY[lesson.id];
@@ -132,7 +162,7 @@
     theory.insertAdjacentHTML('beforeend', '<button class="primary-button theory-next" id="theory-next" type="button">К тесту <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>');
     const quizPassed = state.quizzes[lesson.id]?.passed;
     quiz.hidden = !quizPassed; practice.hidden = !quizPassed; if (ai) ai.hidden = Boolean(quizPassed);
-    $('#theory-next').addEventListener('click', () => { theory.hidden = true; if (ai) ai.hidden = true; quiz.hidden = false; });
+    $('#theory-next').addEventListener('click', () => { theory.hidden = true; if (ai) ai.hidden = true; quiz.hidden = false; updateLessonProgress(lesson, true, 0); });
   }
   function renderLesson() {
     if (state.screen === 'home') return renderHome();
@@ -149,7 +179,7 @@
       return `<div class="task"><p><strong>Задание ${index + 1}.</strong> ${escaped(task.instruction)}</p><div class="task-workspace"><div class="editor-panel"><textarea class="editor" id="editor-${index}" spellcheck="false" aria-label="Код для задания ${index + 1}">${escaped(draft)}</textarea><div class="run-row"><button class="primary-button run-code" type="button" data-task="${index}"><i class="fa-solid fa-play" aria-hidden="true"></i> Запустить</button><span class="attempts">Попыток: <span id="attempts-${index}">${attempts}</span></span></div></div><div class="output-wrap"><span class="output-label">Вывод Python</span><pre class="output" id="output-${index}">${escaped(record.output || 'Нажми «Запустить», чтобы выполнить код.')}</pre></div></div><p class="feedback ${record.passed ? 'success' : ''}" id="practice-feedback-${index}">${record.passed ? '✓ Задание выполнено.' : ''}</p></div>`;
     }).join('');
     const completion = isComplete(lesson) ? `<section class="card completion"><span class="completion-icon">✓</span><div><h2>Урок пройден</h2><p>Следующий урок уже доступен в маршруте.</p></div></section>` : '';
-    $('#lesson-view').innerHTML = `<header class="lesson-header"><div><p class="lesson-kicker">${escaped(lesson.badge)} · шаг интенсива</p><h1 class="lesson-title">${escaped(lesson.title)}</h1></div><span class="lesson-count">${lesson.practice.length} практика</span></header><section class="card theory-card"><h2>1. Пойми принцип</h2><div class="theory-grid"><p class="theory-text">${escaped(lesson.theory)}</p><pre class="code-example"><code>${escaped(lesson.example)}</code></pre></div></section><aside class="ai-workflow"><span><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i> Работай с ИИ как с напарником</span><p>Спроси: «Объясни план решения простыми шагами. Напиши черновик и прокомментируй каждую строку». Затем запусти код, найди ошибку и попроси ИИ объяснить именно её — не переходи дальше, пока можешь пересказать логику своими словами.</p></aside><section class="card quiz-card"><div class="section-heading"><div><h2>2. Проверь себя</h2><p class="theory-text">Три вопроса · проходной балл 70%</p></div></div><form id="quiz-form"><div class="quiz-list">${quiz}</div><button class="primary-button" type="submit"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Проверить тест</button><p class="feedback ${previousQuiz?.passed ? 'success' : ''}" id="quiz-feedback">${previousQuiz ? `Последний результат: ${previousQuiz.percent}%. ${previousQuiz.passed ? '✓ Тест зачтён.' : 'Попробуй ещё раз.'}` : ''}</p></form></section><section class="card practice-card"><div class="section-heading"><div><h2>3. Собери с ИИ и проверь</h2><p class="theory-text">Попроси ИИ дать черновик, затем разберись в нём и запусти код в браузере.</p></div><span class="practice-count">${lesson.practice.length} задания</span></div>${tasks}</section>${completion}`;
+    $('#lesson-view').innerHTML = `<header class="lesson-header"><div><p class="lesson-kicker">${escaped(lesson.badge)} · шаг интенсива</p><h1 class="lesson-title">${escaped(lesson.title)}</h1></div>${lessonProgressMarkup(lesson, Boolean(previousQuiz?.passed), previousQuiz?.passed ? lesson.quiz.length : 0)}</header><section class="card theory-card"><h2>1. Пойми принцип</h2><div class="theory-grid"><p class="theory-text">${escaped(lesson.theory)}</p><pre class="code-example"><code>${escaped(lesson.example)}</code></pre></div></section><aside class="ai-workflow"><span><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i> Работай с ИИ как с напарником</span><p>Спроси: «Объясни план решения простыми шагами. Напиши черновик и прокомментируй каждую строку». Затем запусти код, найди ошибку и попроси ИИ объяснить именно её — не переходи дальше, пока можешь пересказать логику своими словами.</p></aside><section class="card quiz-card"><div class="section-heading"><div><h2>2. Проверь себя</h2><p class="theory-text">Три вопроса · проходной балл 70%</p></div></div><form id="quiz-form"><div class="quiz-list">${quiz}</div><button class="primary-button" type="submit"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Проверить тест</button><p class="feedback ${previousQuiz?.passed ? 'success' : ''}" id="quiz-feedback">${previousQuiz ? `Последний результат: ${previousQuiz.percent}%. ${previousQuiz.passed ? '✓ Тест зачтён.' : 'Попробуй ещё раз.'}` : ''}</p></form></section><section class="card practice-card"><div class="section-heading"><div><h2>3. Собери с ИИ и проверь</h2><p class="theory-text">Попроси ИИ дать черновик, затем разберись в нём и запусти код в браузере.</p></div><span class="practice-count">${lesson.practice.length} задания</span></div>${tasks}</section>${completion}`;
     document.querySelector('.theory-card .theory-text').innerHTML = renderDeepTheory(lesson);
     setLessonStage(lesson);
     $('#lesson-view').querySelectorAll('.run-code').forEach((button) => button.addEventListener('click', () => runPractice(lesson, Number(button.dataset.task), button)));
@@ -162,8 +192,8 @@
     const form = $('#quiz-form'); if (!form) return;
     const questions = [...form.querySelectorAll('.quiz-question')]; const button = form.querySelector('button[type="submit"]'); const feedback = $('#quiz-feedback');
     let cursor = 0; const answers = [];
-    const show = () => { questions.forEach((item, index) => { item.hidden = index !== cursor; item.classList.toggle('is-active', index === cursor); }); button.innerHTML = cursor === questions.length - 1 ? '<i class="fa-solid fa-check" aria-hidden="true"></i> Завершить тест' : '<i class="fa-solid fa-arrow-right" aria-hidden="true"></i> Ответить'; feedback.textContent = `Вопрос ${cursor + 1} из ${questions.length}`; feedback.className = 'feedback'; };
-    form.onsubmit = (event) => { event.preventDefault(); const selected = form.querySelector(`input[name="q${cursor}"]:checked`); if (!selected) { feedback.className = 'feedback error'; feedback.textContent = 'Выбери ответ, чтобы продолжить.'; return; } const answer = Number(selected.value); if (answer !== lesson.quiz[cursor].correct) { feedback.className = 'feedback error'; feedback.textContent = 'Пока нет. Разбери объяснение и попробуй ещё раз.'; return; } answers[cursor] = answer; cursor += 1; if (cursor < questions.length) return show(); const result = evaluateAnswers(lesson.quiz, answers); state.quizzes[lesson.id] = result; const completedNow = checkCompletion(lesson); saveState(); feedback.className = 'feedback success'; feedback.textContent = `✓ Тест пройден: ${result.percent}%.`; const quizCard = document.querySelector('.quiz-card'); const practiceCard = document.querySelector('.practice-card'); const ai = document.querySelector('.ai-workflow'); if (quizCard) quizCard.hidden = true; if (practiceCard) practiceCard.hidden = false; if (ai) ai.hidden = true; renderRoadmap(); if (completedNow) renderLesson(); };
+    const show = () => { questions.forEach((item, index) => { item.hidden = index !== cursor; item.classList.toggle('is-active', index === cursor); }); button.innerHTML = cursor === questions.length - 1 ? '<i class="fa-solid fa-check" aria-hidden="true"></i> Завершить тест' : '<i class="fa-solid fa-arrow-right" aria-hidden="true"></i> Ответить'; feedback.textContent = `Вопрос ${cursor + 1} из ${questions.length}`; feedback.className = 'feedback'; updateLessonProgress(lesson, true, cursor); };
+    form.onsubmit = (event) => { event.preventDefault(); const selected = form.querySelector(`input[name="q${cursor}"]:checked`); if (!selected) { feedback.className = 'feedback error'; feedback.textContent = 'Выбери ответ, чтобы продолжить.'; return; } const answer = Number(selected.value); if (answer !== lesson.quiz[cursor].correct) { feedback.className = 'feedback error'; feedback.textContent = 'Пока нет. Разбери объяснение и попробуй ещё раз.'; return; } answers[cursor] = answer; cursor += 1; if (cursor < questions.length) return show(); const result = evaluateAnswers(lesson.quiz, answers); state.quizzes[lesson.id] = result; const completedNow = checkCompletion(lesson); saveState(); updateLessonProgress(lesson, true, lesson.quiz.length); feedback.className = 'feedback success'; feedback.textContent = `✓ Тест пройден: ${result.percent}%.`; const quizCard = document.querySelector('.quiz-card'); const practiceCard = document.querySelector('.practice-card'); const ai = document.querySelector('.ai-workflow'); if (quizCard) quizCard.hidden = true; if (practiceCard) practiceCard.hidden = false; if (ai) ai.hidden = true; renderRoadmap(); if (completedNow) renderLesson(); };
     show();
   }
   function activatePracticeFlow(lesson) {
@@ -200,6 +230,7 @@
       const validation = validatePractice(task, code, resultOutput); state.practice[key] = { code, output: resultOutput, passed: validation.passed };
       feedback.className = `feedback ${validation.passed ? 'success' : 'error'}`; feedback.textContent = validation.passed ? '✓ Задание выполнено.' : `Пока не зачтено: ${validation.reason}`;
       if (validation.passed) practiceFlow?.reveal(taskIndex);
+      updateLessonProgress(lesson, true, state.quizzes[lesson.id]?.passed ? lesson.quiz.length : 0);
       const completedNow = checkCompletion(lesson); saveState(); renderRoadmap(); if (completedNow) renderLesson();
     } catch (error) {
       const message = error?.message || String(error); output.textContent = message; state.practice[key] = { code, output: message, passed: false }; feedback.className = 'feedback error'; feedback.textContent = 'Python сообщил об ошибке. Исправь код и попробуй снова.'; saveState();
@@ -211,7 +242,6 @@
     schedule(() => ensurePyodide().catch(() => {}));
   }
   function render() { applyTheme(); renderSprint(); renderRoadmap(); renderStreak(); renderLesson(); }
-  $('#theme-toggle').addEventListener('click', () => { const themes = ['classic', 'lavender', 'pink', 'blue', 'graphite', 'dark']; state.theme = themes[(themes.indexOf(state.theme) + 1) % themes.length]; saveState(); applyTheme(); if (state.screen === 'home') renderHome(); });
   $('#reset-progress').addEventListener('click', () => { if (window.confirm('Сбросить весь прогресс этого курса на этом устройстве?')) { state = defaultState(); saveState(); render(); } });
   if (window.loadPyodide) setRuntime('Python: подготавливается…'); else setRuntime('Python: CDN недоступен', 'error');
   render();
