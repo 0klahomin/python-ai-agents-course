@@ -66,12 +66,14 @@ button, textarea { font: inherit; } button { cursor: pointer; } button:focus-vis
 .lesson-view { margin-inline: auto; }
 .lesson-header { position: relative; display: block; min-height: 68px; text-align: center; }
 .lesson-header .home-button { position: absolute; top: 50%; left: 0; transform: translateY(-50%); }
+.lesson-header .home-button:hover { transform: translateY(-50%) translateY(-1px); }
+.lesson-header .home-button:active { transform: translateY(-50%) scale(.97); }
 .lesson-header > div { display: inline-block; text-align: center; }
 .lesson-header .lesson-progress { position: absolute; top: 50%; right: 0; transform: translateY(-50%); }
-.lesson-progress { display: inline-flex; flex-wrap: nowrap; width: max-content; gap: 7px; justify-content: end; white-space: nowrap; }
+.lesson-progress { display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; width: max-content !important; min-width: 218px; gap: 7px; justify-content: end; white-space: nowrap; }
 .lesson-step { display: grid; place-items: center; flex: 0 0 26px; width: 26px; height: 26px; padding: 0; border: 1px solid var(--line); border-radius: 7px; background: var(--panel); color: var(--muted); font-size: .68rem; font-weight: 850; transition: transform 160ms cubic-bezier(.23,1,.32,1), background 160ms ease, border-color 160ms ease, color 160ms ease; }
 .lesson-step.current { border-color: var(--ink); color: var(--ink); }
 .lesson-step.done { border-color: var(--ink); background: var(--ink); color: var(--panel); }
 @media (hover: hover) and (pointer: fine) { .settings-button:hover, .theme-card:hover, .home-button:hover { transform: translateY(-1px); } }
 @media (prefers-reduced-motion: reduce) { .particle-field { display: none; } .lesson-step, .settings-button, .theme-card, .home-button { transition: opacity 120ms ease, color 120ms ease; } }
-@media (max-width: 650px) { .lesson-header { min-height: 112px; padding-top: 36px; }.lesson-header > div { max-width: 100%; }.lesson-header .home-button { top: 18px; transform: none; }.lesson-header .lesson-progress { top: 18px; right: 0; transform: none; gap: 5px; }.lesson-step { flex-basis: 24px; width: 24px; height: 24px; } }
+@media (max-width: 650px) { .lesson-header { min-height: 112px; padding-top: 36px; }.lesson-header > div { max-width: 100%; }.lesson-header .home-button { top: 18px; transform: none; }.lesson-header .home-button:hover { transform: translateY(-1px); }.lesson-header .home-button:active { transform: scale(.97); }.lesson-header .lesson-progress { top: 18px; right: 0; transform: none; gap: 5px; min-width: 218px; }.lesson-step { flex-basis: 24px; width: 24px; height: 24px; } }
