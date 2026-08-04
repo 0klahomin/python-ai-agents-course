@@ -127,7 +127,7 @@
     const symbols = ['fa-code', 'fa-terminal', 'fa-code-branch', 'fa-wand-magic-sparkles', 'fa-bolt', 'fa-database', 'fa-gear', 'fa-cubes', 'fa-brain', 'fa-circle-nodes'];
     let last = 0;
     screen.addEventListener('pointermove', (event) => {
-      if (event.pointerType === 'touch' || Date.now() - last < 68) return;
+      if (event.pointerType === 'touch' || Date.now() - last < 110) return;
       last = Date.now();
       const bounds = screen.getBoundingClientRect(); const x = event.clientX - bounds.left; const y = event.clientY - bounds.top;
       for (let index = 0; index < 2; index += 1) {
@@ -135,8 +135,8 @@
         particle.className = `particle-symbol fa-solid ${symbols[Math.floor(Math.random() * symbols.length)]}`;
         particle.style.left = `${x + (Math.random() - .5) * 16}px`; particle.style.top = `${y + (Math.random() - .5) * 16}px`;
         particle.style.fontSize = `${8 + Math.floor(Math.random() * 7)}px`; field.append(particle);
-        const driftX = (Math.random() - .5) * 96; const driftY = -18 - Math.random() * 74;
-        particle.animate([{ transform: 'translate(-50%, -50%) scale(.9)', opacity: .38 }, { transform: `translate(calc(-50% + ${driftX}px), calc(-50% + ${driftY}px)) scale(1.05) rotate(${(Math.random() - .5) * 38}deg)`, opacity: 0 }], { duration: 1050 + Math.random() * 220, easing: 'cubic-bezier(0.23, 1, 0.32, 1)', fill: 'forwards' }).finished.finally(() => particle.remove());
+        const driftX = (Math.random() - .5) * 62; const driftY = -14 - Math.random() * 48;
+        particle.animate([{ transform: 'translate(-50%, -50%) scale(.92)', opacity: .36 }, { transform: `translate(calc(-50% + ${driftX}px), calc(-50% + ${driftY}px)) scale(1.04) rotate(${(Math.random() - .5) * 26}deg)`, opacity: 0 }], { duration: 1450 + Math.random() * 250, easing: 'cubic-bezier(0.23, 1, 0.32, 1)', fill: 'forwards' }).finished.finally(() => particle.remove());
       }
       while (field.childElementCount > 60) field.firstElementChild?.remove();
     });
