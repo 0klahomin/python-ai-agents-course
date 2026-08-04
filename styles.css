@@ -47,10 +47,9 @@ button, textarea { font: inherit; } button { cursor: pointer; } button:focus-vis
 .topbar-status { justify-self: end; }
 .topbar-status, .runtime-status { display: none; }
 .top-progress { justify-content: center; }
-.home-screen { position: relative; max-width: 1120px; min-height: calc(100vh - 76px); padding: clamp(34px, 7vh, 90px) 28px; overflow: hidden; place-content: center; }
+.home-screen { position: relative; width: 100vw; max-width: none; min-height: calc(100vh - 76px); margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); padding: clamp(34px, 7vh, 90px) 28px; overflow: hidden; place-content: center; }
 .home-screen > * { width: auto; }
 .home-content { position: relative; z-index: 1; display: grid; justify-items: center; width: min(780px, 100%); gap: 22px; }
-.home-content { transform: translateX(clamp(0px, 8vw, 160px)); }
 .home-content .lesson-kicker, .home-content .home-title, .home-content .home-lead, .home-content .home-progress, .home-content .settings-button, .home-content .home-start { margin: 0; }
 .home-lead { max-width: 700px; }
 .home-progress { width: min(620px, 100%); }
@@ -65,11 +64,10 @@ button, textarea { font: inherit; } button { cursor: pointer; } button:focus-vis
 .particle-symbol { position: absolute; color: var(--accent); font-size: 10px; opacity: 0; filter: blur(.1px); will-change: transform, opacity; }
 .lesson-view, .focus-mode .lesson-view { max-width: 1280px; }
 .lesson-view { margin-inline: auto; }
-.lesson-header { display: grid; grid-template-columns: minmax(40px, 1fr) minmax(280px, 1fr) minmax(40px, 1fr); align-items: center; }
-.lesson-header .home-button { justify-self: start; }
-.lesson-header > div { justify-self: center; text-align: center; }
-.lesson-header > div { transform: translateX(clamp(0px, 8vw, 160px)); }
-.lesson-header .lesson-progress { justify-self: end; }
+.lesson-header { position: relative; display: block; min-height: 68px; text-align: center; }
+.lesson-header .home-button { position: absolute; top: 50%; left: 0; transform: translateY(-50%); }
+.lesson-header > div { display: inline-block; text-align: center; }
+.lesson-header .lesson-progress { position: absolute; top: 50%; right: 0; transform: translateY(-50%); }
 .lesson-progress { display: flex; flex-wrap: wrap; gap: 7px; justify-content: end; max-width: 236px; }
 .lesson-step { display: grid; place-items: center; width: 26px; height: 26px; border: 1px solid var(--line); border-radius: 7px; background: var(--panel); color: var(--muted); font-size: .68rem; font-weight: 850; transition: transform 160ms cubic-bezier(.23,1,.32,1), background 160ms ease, border-color 160ms ease, color 160ms ease; }
 .lesson-step.current { border-color: var(--ink); color: var(--ink); }
