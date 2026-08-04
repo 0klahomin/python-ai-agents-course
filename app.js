@@ -143,13 +143,41 @@
   }
   function lessonProgressMarkup(lesson, theoryDone = false, quizDone = 0) {
     const practiceDone = lesson.practice.filter((_, index) => state.practice[`${lesson.id}:${index}`]?.passed).length;
-    const items = [{ label: 'Теория', done: theoryDone || Boolean(state.quizzes[lesson.id]?.passed) }]
-      .concat(lesson.quiz.map((_, index) => ({ label: `Тест ${index + 1}`, done: index < quizDone || Boolean(state.quizzes[lesson.id]?.passed) })))
-      .concat(lesson.practice.map((_, index) => ({ label: `Практика ${index + 1}`, done: index < practiceDone })));
-    return `<div class="lesson-progress" id="lesson-progress" aria-label="Прогресс урока">${items.map((item, index) => `<span class="lesson-step ${item.done ? 'done' : index === 0 && !theoryDone ? 'current' : ''}" title="${item.label}">${item.done ? '<i class="fa-solid fa-check" aria-hidden="true"></i>' : index + 1}</span>`).join('')}</div>`;
+    const items = [{ label: 'Теория', kind: 'theory', index: 0, done: theoryDone || Boolean(state.quizzes[lesson.id]?.passed) }]
+      .concat(lesson.quiz.map((_, index) => ({ label: `Вопрос ${index + 1}`, kind: 'quiz', index, done: index < quizDone || Boolean(state.quizzes[lesson.id]?.passed) })))
+      .concat(lesson.practice.map((_, index) => ({ label: `Практика ${index + 1}`, kind: 'practice', index, done: index < practiceDone })));
+    return `<div class="lesson-progress" id="lesson-progress" aria-label="Навигация по уроку">${items.map((item, index) => `<button class="lesson-step ${item.done ? 'done' : index === 0 && !theoryDone ? 'current' : ''}" type="button" data-progress-kind="${item.kind}" data-progress-index="${item.index}" aria-label="${item.label}" title="${item.label}">${item.done ? '<i class="fa-solid fa-check" aria-hidden="true"></i>' : index + 1}</button>`).join('')}</div>`;
   }
   function updateLessonProgress(lesson, theoryDone = false, quizDone = 0) {
     const progress = $('#lesson-progress'); if (progress) progress.outerHTML = lessonProgressMarkup(lesson, theoryDone, quizDone);
+  }
+  function activateLessonProgressNavigation(lesson) {
+    const view = $('#lesson-view'); if (!view) return;
+    view.addEventListener('click', (event) => {
+      const control = event.target.closest('[data-progress-kind]'); if (!control) return;
+      const kind = control.dataset.progressKind; const index = Number(control.dataset.progressIndex);
+      const theory = document.querySelector('.theory-card'); const ai = document.querySelector('.ai-workflow'); const quiz = document.querySelector('.quiz-card'); const practice = document.querySelector('.practice-card');
+      if (kind === 'theory') {
+        if (theory) { theory.hidden = false; theory.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+        if (ai) ai.hidden = false; if (quiz) quiz.hidden = true; if (practice) practice.hidden = true;
+        return;
+      }
+      if (kind === 'quiz') {
+        if (theory) theory.hidden = true; if (ai) ai.hidden = true; if (practice) practice.hidden = true;
+        if (quiz) { quiz.hidden = false; quiz.dispatchEvent(new CustomEvent('course:show-question', { detail: index })); quiz.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+        return;
+      }
+      if (!state.quizzes[lesson.id]?.passed) {
+        if (quiz) { quiz.hidden = false; quiz.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+        return;
+      }
+      if (theory) theory.hidden = true; if (ai) ai.hidden = true; if (quiz) quiz.hidden = true; if (practice) practice.hidden = false;
+      const tasks = [...document.querySelectorAll('.practice-card .task')];
+      const firstOpen = tasks.findIndex((_, taskIndex) => !state.practice[`${lesson.id}:${taskIndex}`]?.passed);
+      const allowedIndex = firstOpen === -1 ? tasks.length - 1 : firstOpen;
+      const target = tasks[Math.min(index, allowedIndex)];
+      if (target) { target.hidden = false; target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    });
   }
   function renderHome() {
     document.body.classList.remove('focus-mode');
@@ -197,6 +225,7 @@
     $('#home-button').addEventListener('click', goHome);
     activateQuizFlow(lesson);
     activatePracticeFlow(lesson);
+    activateLessonProgressNavigation(lesson);
   }
   function activateQuizFlow(lesson) {
     const form = $('#quiz-form'); if (!form) return;
@@ -204,6 +233,7 @@
     let cursor = 0; const answers = [];
     const show = () => { questions.forEach((item, index) => { item.hidden = index !== cursor; item.classList.toggle('is-active', index === cursor); }); button.innerHTML = cursor === questions.length - 1 ? '<i class="fa-solid fa-check" aria-hidden="true"></i> Завершить тест' : '<i class="fa-solid fa-arrow-right" aria-hidden="true"></i> Ответить'; feedback.textContent = `Вопрос ${cursor + 1} из ${questions.length}`; feedback.className = 'feedback'; updateLessonProgress(lesson, true, cursor); };
     form.onsubmit = (event) => { event.preventDefault(); const selected = form.querySelector(`input[name="q${cursor}"]:checked`); if (!selected) { feedback.className = 'feedback error'; feedback.textContent = 'Выбери ответ, чтобы продолжить.'; return; } const answer = Number(selected.value); if (answer !== lesson.quiz[cursor].correct) { feedback.className = 'feedback error'; feedback.textContent = 'Пока нет. Разбери объяснение и попробуй ещё раз.'; return; } answers[cursor] = answer; cursor += 1; if (cursor < questions.length) return show(); const result = evaluateAnswers(lesson.quiz, answers); state.quizzes[lesson.id] = result; const completedNow = checkCompletion(lesson); saveState(); updateLessonProgress(lesson, true, lesson.quiz.length); feedback.className = 'feedback success'; feedback.textContent = `✓ Тест пройден: ${result.percent}%.`; const quizCard = document.querySelector('.quiz-card'); const practiceCard = document.querySelector('.practice-card'); const ai = document.querySelector('.ai-workflow'); if (quizCard) quizCard.hidden = true; if (practiceCard) practiceCard.hidden = false; if (ai) ai.hidden = true; renderRoadmap(); if (completedNow) renderLesson(); };
+    document.querySelector('.quiz-card')?.addEventListener('course:show-question', (event) => { cursor = Math.max(0, Math.min(Number(event.detail) || 0, questions.length - 1)); show(); });
     show();
   }
   function activatePracticeFlow(lesson) {
