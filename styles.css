@@ -63,7 +63,11 @@ button, textarea { font: inherit; } button { cursor: pointer; } button:focus-vis
 .particle-field { position: absolute; inset: 0; width: 100% !important; height: 100%; pointer-events: none; }
 .particle-symbol { position: absolute; color: var(--accent); font-size: 10px; opacity: 0; filter: blur(.1px); will-change: transform, opacity; }
 .lesson-view, .focus-mode .lesson-view { max-width: 1280px; }
-.lesson-header { align-items: center; }
+.lesson-view { margin-inline: auto; }
+.lesson-header { display: grid; grid-template-columns: minmax(40px, 1fr) minmax(280px, 1fr) minmax(40px, 1fr); align-items: center; }
+.lesson-header .home-button { justify-self: start; }
+.lesson-header > div { justify-self: center; text-align: center; }
+.lesson-header .lesson-progress { justify-self: end; }
 .lesson-progress { display: flex; flex-wrap: wrap; gap: 7px; justify-content: end; max-width: 236px; }
 .lesson-step { display: grid; place-items: center; width: 26px; height: 26px; border: 1px solid var(--line); border-radius: 7px; background: var(--panel); color: var(--muted); font-size: .68rem; font-weight: 850; transition: transform 160ms cubic-bezier(.23,1,.32,1), background 160ms ease, border-color 160ms ease, color 160ms ease; }
 .lesson-step.current { border-color: var(--ink); color: var(--ink); }

@@ -127,18 +127,18 @@
     const symbols = ['fa-code', 'fa-terminal', 'fa-code-branch', 'fa-wand-magic-sparkles', 'fa-bolt', 'fa-database', 'fa-gear', 'fa-cubes', 'fa-brain', 'fa-circle-nodes'];
     let last = 0;
     screen.addEventListener('pointermove', (event) => {
-      if (event.pointerType === 'touch' || Date.now() - last < 26) return;
+      if (event.pointerType === 'touch' || Date.now() - last < 68) return;
       last = Date.now();
       const bounds = screen.getBoundingClientRect(); const x = event.clientX - bounds.left; const y = event.clientY - bounds.top;
-      for (let index = 0; index < 3; index += 1) {
+      for (let index = 0; index < 2; index += 1) {
         const particle = document.createElement('i');
         particle.className = `particle-symbol fa-solid ${symbols[Math.floor(Math.random() * symbols.length)]}`;
         particle.style.left = `${x + (Math.random() - .5) * 16}px`; particle.style.top = `${y + (Math.random() - .5) * 16}px`;
         particle.style.fontSize = `${8 + Math.floor(Math.random() * 7)}px`; field.append(particle);
-        const driftX = (Math.random() - .5) * 144; const driftY = -24 - Math.random() * 104;
-        particle.animate([{ transform: 'translate(-50%, -50%) scale(.88)', opacity: .42 }, { transform: `translate(calc(-50% + ${driftX}px), calc(-50% + ${driftY}px)) scale(1.12) rotate(${(Math.random() - .5) * 64}deg)`, opacity: 0 }], { duration: 820 + Math.random() * 260, easing: 'cubic-bezier(0.23, 1, 0.32, 1)', fill: 'forwards' }).finished.finally(() => particle.remove());
+        const driftX = (Math.random() - .5) * 96; const driftY = -18 - Math.random() * 74;
+        particle.animate([{ transform: 'translate(-50%, -50%) scale(.9)', opacity: .38 }, { transform: `translate(calc(-50% + ${driftX}px), calc(-50% + ${driftY}px)) scale(1.05) rotate(${(Math.random() - .5) * 38}deg)`, opacity: 0 }], { duration: 1050 + Math.random() * 220, easing: 'cubic-bezier(0.23, 1, 0.32, 1)', fill: 'forwards' }).finished.finally(() => particle.remove());
       }
-      while (field.childElementCount > 96) field.firstElementChild?.remove();
+      while (field.childElementCount > 60) field.firstElementChild?.remove();
     });
   }
   function lessonProgressMarkup(lesson, theoryDone = false, quizDone = 0) {
